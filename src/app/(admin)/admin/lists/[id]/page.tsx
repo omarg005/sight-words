@@ -38,7 +38,7 @@ export default async function ListEditorPage({ params }: { params: Promise<{ id:
   // Assignments — flat query then join manually
   const { data: assignments } = await supabase
     .from('assignments')
-    .select('id, input_mode, student_id')
+    .select('id, input_mode, student_id, required_completions')
     .eq('list_id', id)
 
   const assignmentStudentIds = [...new Set((assignments ?? []).map((a) => a.student_id))]
@@ -208,6 +208,7 @@ export default async function ListEditorPage({ params }: { params: Promise<{ id:
                   <th className="px-4 py-2">Student</th>
                   <th className="px-4 py-2">Parent</th>
                   <th className="px-4 py-2">Mode</th>
+                  <th className="px-4 py-2">Passes</th>
                   <th className="px-4 py-2 text-right">Actions</th>
                 </tr>
               </thead>
@@ -223,6 +224,7 @@ export default async function ListEditorPage({ params }: { params: Promise<{ id:
                       <td className="px-4 py-2">
                         <Badge variant="outline" className="capitalize">{a.input_mode}</Badge>
                       </td>
+                      <td className="px-4 py-2 text-muted-foreground">{(a.required_completions ?? 1)}×</td>
                       <td className="px-4 py-2">
                         <div className="flex justify-end">
                           <ActionButton action={deleteAssignment} formData={{ assignmentId: a.id, listId: id }} label="Remove" variant="destructive" successMessage="Assignment removed." confirm={`Remove ${student?.display_name ?? 'this student'} from this list?`} />

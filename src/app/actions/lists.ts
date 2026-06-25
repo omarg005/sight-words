@@ -284,13 +284,14 @@ export async function createAssignment(formData: FormData) {
   const listId = formData.get('listId') as string
   const studentId = formData.get('studentId') as string
   const inputMode = formData.get('inputMode') as string
+  const requiredCompletions = Math.max(1, parseInt(formData.get('requiredCompletions') as string) || 1)
 
   if (!studentId) return { error: 'Please select a student.' }
   if (!inputMode) return { error: 'Please select an input mode.' }
 
   const { error } = await supabase
     .from('assignments')
-    .insert({ list_id: listId, student_id: studentId, input_mode: inputMode })
+    .insert({ list_id: listId, student_id: studentId, input_mode: inputMode, required_completions: requiredCompletions })
 
   if (error) {
     if (error.code === '23505') return { error: 'This list is already assigned to that student.' }

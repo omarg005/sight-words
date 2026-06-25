@@ -21,6 +21,8 @@ interface Props {
   inputMode: 'handwrite' | 'type'
   words: Word[]
   backHref: string
+  requiredCompletions: number
+  priorCompletions: number
 }
 
 type Phase = 'ready' | 'active' | 'retry-intro' | 'complete'
@@ -52,10 +54,13 @@ export default function SightWordsActivity({
   inputMode,
   words,
   backHref,
+  requiredCompletions,
+  priorCompletions,
 }: Props) {
   const { soundOn, toggle: toggleSound, ding, miss, fanfare } = useSounds()
 
   const [phase, setPhase] = useState<Phase>('ready')
+  const [sessionsThisVisit, setSessionsThisVisit] = useState(0)
   const [queue, setQueue] = useState<Word[]>([])
   const [queueIndex, setQueueIndex] = useState(0)
   const [missedIds, setMissedIds] = useState<Set<string>>(new Set())
@@ -146,10 +151,20 @@ export default function SightWordsActivity({
   }
 
   async function finishSession() {
-    fanfare()
-    confetti({ particleCount: 180, spread: 80, origin: { y: 0.55 } })
-    setTimeout(() => confetti({ particleCount: 80, spread: 60, angle: 60, origin: { x: 0, y: 0.6 } }), 300)
-    setTimeout(() => confetti({ particleCount: 80, spread: 60, angle: 120, origin: { x: 1, y: 0.6 } }), 500)
+    const newSessionCount = sessionsThisVisit + 1
+    setSessionsThisVisit(newSessionCount)
+    const totalDone = priorCompletions + newSessionCount
+    const allPassesDone = totalDone >= requiredCompletions
+
+    if (allPassesDone) {
+      fanfare()
+      confetti({ particleCount: 180, spread: 80, origin: { y: 0.55 } })
+      setTimeout(() => confetti({ particleCount: 80, spread: 60, angle: 60, origin: { x: 0, y: 0.6 } }), 300)
+      setTimeout(() => confetti({ particleCount: 80, spread: 60, angle: 120, origin: { x: 1, y: 0.6 } }), 500)
+    } else {
+      fanfare()
+      confetti({ particleCount: 60, spread: 50, origin: { y: 0.6 } })
+    }
     await recordListCompletion({ studentId, listId, assignmentId, practiceRoundsNeeded: totalRounds - 1 })
     setPhase('complete')
   }
@@ -242,6 +257,10 @@ export default function SightWordsActivity({
 
   // ─── COMPLETE SCREEN ─────────────────────────────────────────────────────────
   if (phase === 'complete') {
+    const totalDone = priorCompletions + sessionsThisVisit
+    const allPassesDone = totalDone >= requiredCompletions
+    const passesLeft = requiredCompletions - totalDone
+
     return (
       <div className="mx-auto flex max-w-lg flex-col items-center gap-6 py-8 sm:py-12 text-center px-4">
         <motion.div
@@ -250,7 +269,7 @@ export default function SightWordsActivity({
           transition={{ type: 'spring', stiffness: 200, damping: 15 }}
           className="text-8xl"
         >
-          🏆
+          {allPassesDone ? '🏆' : '⭐'}
         </motion.div>
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
@@ -258,7 +277,7 @@ export default function SightWordsActivity({
           transition={{ delay: 0.3 }}
           className="text-4xl font-bold"
         >
-          Amazing job!
+          {allPassesDone ? 'Amazing job!' : 'Great work!'}
         </motion.h2>
         <motion.p
           initial={{ opacity: 0 }}
@@ -266,8 +285,20 @@ export default function SightWordsActivity({
           transition={{ delay: 0.5 }}
           className="text-xl text-muted-foreground"
         >
-          You finished <strong>{listName}</strong>!
+          {allPassesDone
+            ? <>You finished <strong>{listName}</strong>!</>
+            : <><strong>Pass {totalDone}</strong> of <strong>{requiredCompletions}</strong> complete!</>}
         </motion.p>
+        {!allPassesDone && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.65 }}
+            className="text-lg font-semibold text-violet-600"
+          >
+            {passesLeft} more pass{passesLeft !== 1 ? 'es' : ''} to go! 💪
+          </motion.p>
+        )}
         {practiceRounds > 0 && (
           <motion.p
             initial={{ opacity: 0 }}
@@ -285,7 +316,7 @@ export default function SightWordsActivity({
           className="flex flex-col items-center gap-3 mt-4 w-full sm:w-auto"
         >
           <Button size="lg" onClick={startFirstRound} className="w-full sm:w-auto text-xl px-8 py-7 rounded-2xl">
-            Practice again
+            {allPassesDone ? 'Practice again' : 'Start next pass 🚀'}
           </Button>
           <Link href={backHref} className="text-sm text-muted-foreground hover:text-foreground">
             ← Back to lists

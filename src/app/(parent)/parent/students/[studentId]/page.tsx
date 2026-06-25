@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 
 type ListInfo = { id: string; name: string; grade_level: string; retired_at: string | null }
-type Assignment = { id: string; input_mode: string; list_id: string }
+type Assignment = { id: string; input_mode: string; list_id: string; required_completions: number }
 type ProgressEntry = { gotRight: Set<string>; gotWrong: Set<string> }
 
 function AssignmentCard({
@@ -26,6 +26,8 @@ function AssignmentCard({
 
   const totalWords = wordCountMap[a.list_id] ?? 0
   const completionCount = completionCountMap[a.list_id] ?? 0
+  const required = a.required_completions ?? 1
+  const isFullyDone = completionCount >= required
   const progress = progressMap[a.id]
   const gotRight = progress?.gotRight.size ?? 0
   const forReview = progress
@@ -37,20 +39,33 @@ function AssignmentCard({
   let statusBadge: React.ReactNode
   let statusLine: React.ReactNode
 
-  if (completionCount > 0) {
+  if (isFullyDone) {
     statusIcon = '🏆'
     statusBadge = (
       <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">
-        {completionCount > 1 ? `Completed ${completionCount}×` : 'Completed'} ✓
+        {required > 1 ? `${completionCount}/${required} passes ✓` : 'Completed ✓'}
       </span>
     )
     statusLine = forReview > 0
       ? <span className="text-amber-600">{forReview} word{forReview !== 1 ? 's' : ''} to review</span>
       : <span className="text-green-600">All words mastered!</span>
+  } else if (completionCount > 0) {
+    // Passes done but more needed
+    statusIcon = '🔄'
+    statusBadge = (
+      <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+        Pass {completionCount} of {required}
+      </span>
+    )
+    statusLine = <span className="text-blue-600">{required - completionCount} more pass{required - completionCount !== 1 ? 'es' : ''} to go!</span>
   } else if (!hasStarted) {
     statusIcon = '📖'
     statusBadge = null
-    statusLine = <span className="text-muted-foreground">Not started yet</span>
+    statusLine = (
+      <span className="text-muted-foreground">
+        Not started yet{required > 1 ? ` · ${required} passes required` : ''}
+      </span>
+    )
   } else {
     statusIcon = '✏️'
     statusBadge = null
@@ -107,7 +122,7 @@ export default async function StudentHomePage({
 
   const { data: assignments } = await supabase
     .from('assignments')
-    .select('id, input_mode, list_id')
+    .select('id, input_mode, list_id, required_completions')
     .eq('student_id', studentId)
 
   const assignmentIds = (assignments ?? []).map((a) => a.id)
@@ -167,8 +182,8 @@ export default async function StudentHomePage({
   const activeAssignments = (assignments ?? []).filter((a) => !listMap[a.list_id]?.retired_at)
   const retiredAssignments = (assignments ?? []).filter((a) => listMap[a.list_id]?.retired_at)
 
-  const openAssignments = activeAssignments.filter((a) => !(completionCountMap[a.list_id] ?? 0))
-  const doneAssignments = activeAssignments.filter((a) => !!(completionCountMap[a.list_id] ?? 0))
+  const openAssignments = activeAssignments.filter((a) => (completionCountMap[a.list_id] ?? 0) < (a.required_completions ?? 1))
+  const doneAssignments = activeAssignments.filter((a) => (completionCountMap[a.list_id] ?? 0) >= (a.required_completions ?? 1))
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">

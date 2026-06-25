@@ -17,7 +17,7 @@ export default async function ActivityPage({
   // Verify this assignment belongs to one of this parent's students
   const { data: assignment } = await supabase
     .from('assignments')
-    .select('id, list_id, input_mode, student_id')
+    .select('id, list_id, input_mode, student_id, required_completions')
     .eq('id', assignmentId)
     .eq('student_id', studentId)
     .single()
@@ -41,6 +41,12 @@ export default async function ActivityPage({
     .single()
 
   if (!list) notFound()
+
+  const { count: priorCompletions } = await supabase
+    .from('list_completions')
+    .select('id', { count: 'exact', head: true })
+    .eq('student_id', studentId)
+    .eq('list_id', assignment.list_id)
 
   const { data: words } = await supabase
     .from('sight_words')
@@ -85,6 +91,8 @@ export default async function ActivityPage({
       inputMode={assignment.input_mode as 'handwrite' | 'type'}
       words={wordsWithUrls}
       backHref={`/parent/students/${studentId}`}
+      requiredCompletions={assignment.required_completions ?? 1}
+      priorCompletions={priorCompletions ?? 0}
     />
   )
 }

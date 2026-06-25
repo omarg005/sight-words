@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { NativeSelect } from '@/components/ui/native-select'
 
 interface List { id: string; name: string; grade_level: string }
-interface Assignment { id: string; list_id: string; list_name: string; grade_level: string; input_mode: string }
+interface Assignment { id: string; list_id: string; list_name: string; grade_level: string; input_mode: string; required_completions: number }
 
 interface Props {
   studentId: string
@@ -59,6 +59,7 @@ export default function StudentAssignSection({ studentId, assignments, available
                 <th className="px-4 py-2">List</th>
                 <th className="px-4 py-2">Grade</th>
                 <th className="px-4 py-2">Mode</th>
+                <th className="px-4 py-2">Passes</th>
                 <th className="px-4 py-2 text-right">Actions</th>
               </tr>
             </thead>
@@ -72,6 +73,7 @@ export default function StudentAssignSection({ studentId, assignments, available
                   <td className="px-4 py-2">
                     <Badge variant="outline" className="capitalize">{a.input_mode}</Badge>
                   </td>
+                  <td className="px-4 py-2 text-muted-foreground">{a.required_completions}×</td>
                   <td className="px-4 py-2">
                     <div className="flex justify-end">
                       <RemoveButton assignmentId={a.id} studentId={studentId} />
@@ -112,6 +114,18 @@ export default function StudentAssignSection({ studentId, assignments, available
                 <option value="handwrite">Handwrite</option>
                 <option value="type">Type</option>
               </NativeSelect>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="requiredCompletions">Passes Required</Label>
+              <input
+                id="requiredCompletions"
+                name="requiredCompletions"
+                type="number"
+                min={1}
+                defaultValue={1}
+                className="flex h-9 w-20 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
             </div>
 
             <Button type="submit" disabled={pending}>

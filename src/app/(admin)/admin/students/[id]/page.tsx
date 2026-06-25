@@ -25,7 +25,7 @@ export default async function EditStudentPage({
   ] = await Promise.all([
     supabase.from('students').select('id, display_name, grade_level, parent_id').eq('id', id).single(),
     supabase.from('users').select('id, email').eq('role', 'parent').is('retired_at', null).order('email'),
-    supabase.from('assignments').select('id, list_id, input_mode').eq('student_id', id),
+    supabase.from('assignments').select('id, list_id, input_mode, required_completions').eq('student_id', id),
     supabase.from('sight_word_lists').select('id, name, grade_level').is('retired_at', null).order('grade_level').order('name'),
   ])
 
@@ -41,6 +41,7 @@ export default async function EditStudentPage({
     list_name: listMap[a.list_id]?.name ?? 'Unknown list',
     grade_level: listMap[a.list_id]?.grade_level ?? '—',
     input_mode: a.input_mode,
+    required_completions: a.required_completions ?? 1,
   }))
 
   const availableLists = (allLists ?? []).filter((l) => !assignedListIds.includes(l.id))

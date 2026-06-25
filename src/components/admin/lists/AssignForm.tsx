@@ -57,6 +57,18 @@ export default function AssignForm({ listId, students, assignedStudentIds }: Pro
         </NativeSelect>
       </div>
 
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="requiredCompletions">Passes Required</Label>
+        <input
+          id="requiredCompletions"
+          name="requiredCompletions"
+          type="number"
+          min={1}
+          defaultValue={1}
+          className="flex h-9 w-20 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
+      </div>
+
       <Button type="submit" disabled={pending}>
         {pending ? 'Assigning…' : 'Assign'}
       </Button>
