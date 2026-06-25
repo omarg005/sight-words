@@ -54,7 +54,7 @@ export default async function ProgressPage({
 
   const { data: assignments } = await supabase
     .from('assignments')
-    .select('id, list_id, input_mode')
+    .select('id, list_id, input_mode, required_completions')
     .eq('student_id', studentId)
 
   const listIds = (assignments ?? []).map((a) => a.list_id)
@@ -120,8 +120,11 @@ export default async function ProgressPage({
     : { data: [] }
   const wordMap = Object.fromEntries((wordRows ?? []).map((w) => [w.id, w.word]))
 
-  // Lists completed at least once (for sticker collection)
-  const completedListIds = Object.keys(completionsByList)
+  // Lists where all required passes are done (earn sticker)
+  const completedListIds = Object.keys(completionsByList).filter((listId) => {
+    const required = assignmentByListId[listId]?.required_completions ?? 1
+    return (completionsByList[listId]?.count ?? 0) >= required
+  })
 
   // All assigned lists sorted: active first, then retired
   const allAssignedLists = (lists ?? []).sort((a, b) => {
@@ -191,7 +194,7 @@ export default async function ProgressPage({
               <thead className="bg-gray-50 text-left text-xs text-muted-foreground">
                 <tr>
                   <th className="px-4 py-2">List</th>
-                  <th className="px-4 py-2 text-center">Completed</th>
+                  <th className="px-4 py-2 text-center">Passes</th>
                   <th className="px-4 py-2 text-center">Accuracy</th>
                   <th className="px-4 py-2">Last Done</th>
                 </tr>
@@ -203,6 +206,9 @@ export default async function ProgressPage({
                   const acc = assignment ? accuracyByAssignment[assignment.id] : undefined
                   const pct = acc && acc.total > 0 ? Math.round((acc.correct / acc.total) * 100) : null
                   const isHandwrite = assignment?.input_mode === 'handwrite'
+                  const required = assignment?.required_completions ?? 1
+                  const done = comp?.count ?? 0
+                  const allDone = done >= required
 
                   return (
                     <tr key={list.id} className={`border-t ${list.retired_at ? 'opacity-60' : ''}`}>
@@ -213,12 +219,18 @@ export default async function ProgressPage({
                         )}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {comp ? (
-                          <span className="font-semibold text-green-700">
-                            {comp.count}× ✓
-                          </span>
+                        {required === 1 ? (
+                          // Single-pass: simple done / not done
+                          allDone ? (
+                            <span className="font-semibold text-green-700">✓ Done</span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          // Multi-pass: show X / N with colour
+                          <span className={`font-semibold ${allDone ? 'text-green-700' : done > 0 ? 'text-blue-600' : 'text-muted-foreground'}`}>
+                            {done} / {required}{allDone ? ' ✓' : ''}
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-center">
