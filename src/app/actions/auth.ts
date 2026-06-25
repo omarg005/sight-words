@@ -45,6 +45,19 @@ export async function signOut() {
   redirect('/login')
 }
 
+export async function changeEmail(formData: FormData) {
+  const newEmail = (formData.get('newEmail') as string)?.trim().toLowerCase()
+
+  if (!newEmail) return { error: 'Email is required.' }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) return { error: 'Enter a valid email address.' }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.updateUser({ email: newEmail })
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
 export async function changePassword(formData: FormData) {
   const newPassword = formData.get('newPassword') as string
   const confirm = formData.get('confirm') as string
