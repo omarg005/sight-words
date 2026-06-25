@@ -45,6 +45,24 @@ export async function signOut() {
   redirect('/login')
 }
 
+export async function changePassword(formData: FormData) {
+  const newPassword = formData.get('newPassword') as string
+  const confirm = formData.get('confirm') as string
+
+  if (!newPassword || newPassword.length < 6) {
+    return { error: 'Password must be at least 6 characters.' }
+  }
+  if (newPassword !== confirm) {
+    return { error: 'Passwords do not match.' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
 // Used by admin to create parent accounts (service-role bypasses RLS)
 export async function createParentAccount(formData: FormData) {
   const email = formData.get('email') as string

@@ -54,6 +54,13 @@ export default function AdminNav() {
         </nav>
 
         <div className="flex flex-1 items-center justify-end gap-2 md:flex-none">
+          <Link
+            href="/admin/settings"
+            className="hidden md:inline-flex items-center rounded-xl px-3 py-1.5 text-sm font-semibold text-slate-500 hover:bg-violet-50 hover:text-violet-700 transition-all"
+            title="Change password"
+          >
+            ⚙️
+          </Link>
           <form action={signOut} className="hidden md:block">
             <Button variant="ghost" size="sm" type="submit" className="font-semibold text-slate-500 hover:text-violet-700 hover:bg-violet-50">
               Sign out
@@ -97,6 +104,13 @@ export default function AdminNav() {
               {link.label}
             </Link>
           ))}
+          <Link
+            href="/admin/settings"
+            onClick={() => setOpen(false)}
+            className="block rounded-xl px-4 py-2.5 text-sm font-bold text-slate-500 hover:bg-violet-50 hover:text-violet-700"
+          >
+            ⚙️ Change Password
+          </Link>
           <form action={signOut} className="pt-1">
             <button type="submit" className="w-full rounded-xl px-4 py-2.5 text-left text-sm font-bold text-slate-500 hover:bg-violet-50 hover:text-violet-700">
               Sign out
