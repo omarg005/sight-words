@@ -61,6 +61,13 @@ export default function ParentNav() {
         </nav>
 
         <div className="flex flex-1 items-center justify-end gap-2 md:flex-none">
+          <Link
+            href="/parent/settings"
+            className="hidden md:inline-flex items-center rounded-xl px-3 py-1.5 text-sm font-semibold text-white/80 hover:bg-white/20 hover:text-white transition-all"
+            title="Change password"
+          >
+            ⚙️
+          </Link>
           <form action={signOut} className="hidden md:block">
             <Button
               variant="ghost"
@@ -109,6 +116,13 @@ export default function ParentNav() {
               {link.label}
             </Link>
           ))}
+          <Link
+            href="/parent/settings"
+            onClick={() => setOpen(false)}
+            className="block rounded-xl px-4 py-2.5 text-sm font-bold text-white/75 hover:bg-white/15 hover:text-white"
+          >
+            ⚙️ Change Password
+          </Link>
           <form action={signOut} className="pt-1">
             <button
               type="submit"
